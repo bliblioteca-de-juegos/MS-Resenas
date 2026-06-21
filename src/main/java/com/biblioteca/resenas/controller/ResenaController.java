@@ -3,6 +3,8 @@ package com.biblioteca.resenas.controller;
 import com.biblioteca.resenas.dto.ResenaRequestDTO;
 import com.biblioteca.resenas.dto.ResenaResponseDTO;
 import com.biblioteca.resenas.service.ResenaService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -20,17 +22,20 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v2/resenas")
+@Tag(name = "Resenas", description = "Operaciones de resenas y calificaciones")
 @RequiredArgsConstructor
 public class ResenaController {
 
     private final ResenaService resenaService;
 
     @GetMapping
+    @Operation(summary = "Listar todas las resenas")
     public List<ResenaResponseDTO> obtenerTodas() {
         return resenaService.obtenerTodas();
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener una resena por ID")
     public ResponseEntity<ResenaResponseDTO> obtenerPorId(@PathVariable Long id) {
         return resenaService.obtenerPorId(id)
                 .map(ResponseEntity::ok)
@@ -38,16 +43,19 @@ public class ResenaController {
     }
 
     @GetMapping("/juego/{juegoId}")
+    @Operation(summary = "Listar resenas por juego")
     public List<ResenaResponseDTO> obtenerPorJuego(@PathVariable Long juegoId) {
         return resenaService.obtenerPorJuego(juegoId);
     }
 
     @GetMapping("/usuario/{usuarioId}")
+    @Operation(summary = "Listar resenas por usuario")
     public List<ResenaResponseDTO> obtenerPorUsuario(@PathVariable Long usuarioId) {
         return resenaService.obtenerPorUsuario(usuarioId);
     }
 
     @GetMapping("/usuario/{usuarioId}/juego/{juegoId}")
+    @Operation(summary = "Obtener la resena de un usuario para un juego")
     public ResponseEntity<ResenaResponseDTO> obtenerPorUsuarioYJuego(
             @PathVariable Long usuarioId,
             @PathVariable Long juegoId) {
@@ -57,11 +65,13 @@ public class ResenaController {
     }
 
     @PostMapping
+    @Operation(summary = "Crear una resena")
     public ResponseEntity<ResenaResponseDTO> crear(@Valid @RequestBody ResenaRequestDTO dto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(resenaService.crear(dto));
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Actualizar una resena")
     public ResponseEntity<ResenaResponseDTO> actualizar(
             @PathVariable Long id,
             @Valid @RequestBody ResenaRequestDTO dto) {
@@ -71,6 +81,7 @@ public class ResenaController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar una resena")
     public ResponseEntity<Void> eliminar(@PathVariable Long id) {
         resenaService.eliminar(id);
         return ResponseEntity.noContent().build();
