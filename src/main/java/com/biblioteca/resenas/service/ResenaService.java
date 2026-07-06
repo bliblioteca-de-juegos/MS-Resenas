@@ -1,5 +1,6 @@
 package com.biblioteca.resenas.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import com.biblioteca.resenas.client.JuegoClient;
 import com.biblioteca.resenas.client.UsuarioClient;
 import com.biblioteca.resenas.dto.JuegoDTO;
@@ -8,63 +9,53 @@ import com.biblioteca.resenas.dto.ResenaResponseDTO;
 import com.biblioteca.resenas.model.Resena;
 import com.biblioteca.resenas.repository.ResenaRepository;
 import feign.FeignException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-
 @Service
-@RequiredArgsConstructor
 public class ResenaService {
-
-    private final ResenaRepository resenaRepository;
-    private final JuegoClient juegoClient;
-    private final UsuarioClient usuarioClient;
-
+    @Autowired
+    private ResenaRepository resenaRepository;
+    @Autowired
+    private JuegoClient juegoClient;
+    @Autowired
+    private UsuarioClient usuarioClient;
     public List<ResenaResponseDTO> obtenerTodas() {
         return resenaRepository.findAll().stream()
                 .map(this::mapToDTO)
                 .toList();
     }
-
     public Optional<ResenaResponseDTO> obtenerPorId(Long id) {
         return resenaRepository.findById(id).map(this::mapToDTO);
     }
-
     public List<ResenaResponseDTO> obtenerPorJuego(Long juegoId) {
         validarJuego(juegoId);
         return resenaRepository.findByJuegoId(juegoId).stream()
                 .map(this::mapToDTO)
                 .toList();
     }
-
     public List<ResenaResponseDTO> obtenerPorUsuario(Long usuarioId) {
         validarUsuario(usuarioId);
         return resenaRepository.findByUsuarioId(usuarioId).stream()
                 .map(this::mapToDTO)
                 .toList();
     }
-
     public Optional<ResenaResponseDTO> obtenerPorUsuarioYJuego(Long usuarioId, Long juegoId) {
         validarUsuario(usuarioId);
         validarJuego(juegoId);
         return resenaRepository.findByUsuarioIdAndJuegoId(usuarioId, juegoId)
                 .map(this::mapToDTO);
     }
-
     @Transactional
     public ResenaResponseDTO crear(ResenaRequestDTO dto) {
         validarUsuario(dto.getUsuarioId());
         validarJuego(dto.getJuegoId());
-
         if (resenaRepository.existsByUsuarioIdAndJuegoId(dto.getUsuarioId(), dto.getJuegoId())) {
             throw new IllegalArgumentException("El usuario ya tiene una resena para este juego");
         }
-
         Resena resena = new Resena(
                 null,
                 dto.getUsuarioId(),
@@ -74,15 +65,12 @@ public class ResenaService {
                 LocalDateTime.now(),
                 null
         );
-
         return mapToDTO(resenaRepository.save(resena));
     }
-
     @Transactional
     public Optional<ResenaResponseDTO> actualizar(Long id, ResenaRequestDTO dto) {
         validarUsuario(dto.getUsuarioId());
         validarJuego(dto.getJuegoId());
-
         return resenaRepository.findById(id).map(resena -> {
             resena.setUsuarioId(dto.getUsuarioId());
             resena.setJuegoId(dto.getJuegoId());
@@ -92,7 +80,6 @@ public class ResenaService {
             return mapToDTO(resenaRepository.save(resena));
         });
     }
-
     @Transactional
     public void eliminar(Long id) {
         if (!resenaRepository.existsById(id)) {
@@ -100,7 +87,6 @@ public class ResenaService {
         }
         resenaRepository.deleteById(id);
     }
-
     private ResenaResponseDTO mapToDTO(Resena resena) {
         return new ResenaResponseDTO(
                 resena.getId(),
@@ -113,7 +99,6 @@ public class ResenaService {
                 obtenerJuegoSeguro(resena.getJuegoId())
         );
     }
-
     private void validarUsuario(Long usuarioId) {
         try {
             usuarioClient.obtenerUsuario(usuarioId);
@@ -121,7 +106,6 @@ public class ResenaService {
             throw new IllegalArgumentException("No existe un usuario con id " + usuarioId);
         }
     }
-
     private void validarJuego(Long juegoId) {
         try {
             juegoClient.obtenerJuego(juegoId);
@@ -129,7 +113,6 @@ public class ResenaService {
             throw new IllegalArgumentException("No existe un juego con id " + juegoId);
         }
     }
-
     private JuegoDTO obtenerJuegoSeguro(Long juegoId) {
         try {
             return juegoClient.obtenerJuego(juegoId);
